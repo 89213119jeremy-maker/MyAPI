@@ -1,0 +1,11 @@
+# .NET 編譯產物
+bin/
+obj/
+
+# 使用者個人設定
+*.user
+*.suo
+*.vs/
+
+# macOS
+.DS_Store
