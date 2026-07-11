@@ -37,6 +37,14 @@ var app = builder.Build();
 // 啟用 CORS (讓前端網頁可以跨網域存取這個 API)
 app.UseCors();
 
+// 啟用靜態檔案服務
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
+        Path.Combine(Directory.GetCurrentDirectory(), "..", "picture")),
+    RequestPath = "/images"
+});
+
 // 5. 自動檢查並初始化 MySQL 資料庫與假資料
 using (var scope = app.Services.CreateScope())
 {
@@ -48,8 +56,9 @@ using (var scope = app.Services.CreateScope())
     // 如果資料表是空的，才塞入初始商品
     if (!db.Products.Any())
     {
-        db.Products.Add(new Product { Name = "無線機械鍵盤", Price = 2490, IsAvailable = true });
-        db.Products.Add(new Product { Name = "人體工學滑鼠", Price = 1890, IsAvailable = true });
+        db.Products.Add(new Product { Name = "無線機械鍵盤", Price = 2490, IsAvailable = true, ImageUrl = "/images/keyboard.jpg" });
+        db.Products.Add(new Product { Name = "人體工學滑鼠", Price = 1890, IsAvailable = true, ImageUrl = "/images/mouse.jpg" });
+        db.Products.Add(new Product { Name = "無線耳機", Price = 2990, IsAvailable = true, ImageUrl = "/images/earphone.jpg" });
         db.SaveChanges(); // 存入 MySQL
     }
 }
@@ -105,6 +114,7 @@ public class Product
     public string Name { get; set; } = string.Empty;
     public int Price { get; set; }
     public bool IsAvailable { get; set; }
+    public string ImageUrl { get; set; } = string.Empty;
 }
 
 // 定義資料庫大總管

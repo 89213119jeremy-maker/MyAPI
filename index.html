@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-    
+
 <head>
     <meta charset="UTF-8">
     <title>我的第一個前端網頁</title>
@@ -20,25 +20,25 @@
     </ul>
 
     <script>
-   // 建立一個功能，專門用來跟後端要資料
+        // 建立一個功能，專門用來跟後端要資料
         async function loadProducts() {
             try {
                 // 1. 用 fetch 去敲 C# 後端的門，把商品資料抓回來
                 // 這裡的 5211 要配合你 C# 終端機顯示的數字喔！
                 console.log('開始載入商品...');
                 const response = await fetch('http://localhost:5211/api/products');
-                
+
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                
+
                 // 2. 把拿到的資料，轉換成網頁看得懂的 C# 物件/陣列格式
                 const products = await response.json();
                 console.log('成功取得商品資料:', products);
 
                 // 3. 抓到網頁上那個叫作 "productList" 的空位
                 const listElement = document.getElementById('productList');
-                
+
                 // 先把裡面的「等待載入商品...」清空
                 listElement.innerHTML = '';
 
@@ -51,12 +51,18 @@
                 // 4. 用迴圈把每一筆商品倒出來，做成新的 <li> 標籤塞進網頁
                 products.forEach(product => {
                     const li = document.createElement('li');
-                    
+
                     // 這裡的 product.name 和 product.price 就是你 C# 裡定義的屬性！
                     li.innerText = product.name + " ─ $" + product.price + "元";
-                    
+
                     // 把做好的這一行字放到清單裡
                     listElement.appendChild(li);
+
+                    const img = document.createElement('img');
+                    img.src = 'http://localhost:5211' + product.imageUrl;
+                    img.style.width = '50px';
+                    img.style.marginLeft = '10px';
+                    li.appendChild(img)
                 });
             } catch (error) {
                 console.error('錯誤:', error);
@@ -69,4 +75,5 @@
     </script>
 
 </body>
+
 </html>
