@@ -51,19 +51,35 @@
                 // 4. 用迴圈把每一筆商品倒出來，做成新的 <li> 標籤塞進網頁
                 products.forEach(product => {
                     const li = document.createElement('li');
+                    li.style.listStyle = 'none';       // 去掉項目符號
+                    li.style.marginBottom = '20px';     // 每個商品之間的間距
 
-                    // 這裡的 product.name 和 product.price 就是你 C# 裡定義的屬性！
-                    li.innerText = product.name + " ─ $" + product.price + "元";
-
-                    // 把做好的這一行字放到清單裡
-                    listElement.appendChild(li);
-
+                    // 先建立圖片（放在上面）
                     const img = document.createElement('img');
                     img.src = 'http://localhost:5211' + product.imageUrl;
-                    img.style.width = '50px';
-                    img.style.marginLeft = '10px';
-                    li.appendChild(img)
+                    img.alt = product.name;
+                    img.style.width = '300px';
+                    img.style.height = '300px';
+                    img.style.objectFit = 'cover';      // 等比例裁切填滿，不變形
+                    img.style.display = 'block';        // 圖片獨佔一行
+
+                    // 如果是耳機，依照原始比例顯示，寬度縮小一倍
+                    if (product.imageUrl.includes('earphone')) {
+                        img.style.width = '150px';
+                        img.style.height = 'auto';
+                        img.style.objectFit = 'contain';
+                    }
+
+                    li.appendChild(img);                // 先放圖片
+
+                    // 再建立文字（放在下面）
+                    const text = document.createElement('span');
+                    text.innerText = product.name + " ─ $" + product.price + "元";
+                    li.appendChild(text);               // 再放文字
+
+                    listElement.appendChild(li);
                 });
+
             } catch (error) {
                 console.error('錯誤:', error);
                 document.getElementById('productList').innerHTML = '<li style="color: red;">❌ 無法連接後端，請檢查：<br>1. 後端是否正在運行 (dotnet run)<br>2. 埠號是否正確 (5211)<br>3. 瀏覽器Console有無錯誤訊息</li>';
