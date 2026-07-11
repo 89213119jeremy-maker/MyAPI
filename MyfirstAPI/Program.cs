@@ -34,6 +34,9 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// 啟用 CORS (讓前端網頁可以跨網域存取這個 API)
+app.UseCors();
+
 // 5. 自動檢查並初始化 MySQL 資料庫與假資料
 using (var scope = app.Services.CreateScope())
 {
