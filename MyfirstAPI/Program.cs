@@ -103,6 +103,37 @@ app.MapPost("/api/product", async (Product newProduct, AppDbContext db) =>
     return Results.Created($"/api/product/{newProduct.Id}", newProduct);
 });
 
+// 【PUT】編輯商品
+app.MapPut("/api/product/{id}", async (int id, Product updatedProduct, AppDbContext db) =>
+{
+    var product = await db.Products.FindAsync(id);
+    if (product is null) return Results.NotFound(new { Message = $"找不到編號為 {id} 的商品" });
+
+    // 更新欄位
+    product.Name = updatedProduct.Name;
+    product.Price = updatedProduct.Price;
+    product.IsAvailable = updatedProduct.IsAvailable;
+    product.ImageUrl = updatedProduct.ImageUrl;
+
+    await db.SaveChangesAsync();
+    Console.WriteLine($"【系統通知】成功更新商品：{product.Name}");
+
+    return Results.Ok(product);
+});
+
+// 【DELETE】刪除商品
+app.MapDelete("/api/product/{id}", async (int id, AppDbContext db) =>
+{
+    var product = await db.Products.FindAsync(id);
+    if (product is null) return Results.NotFound(new { Message = $"找不到編號為 {id} 的商品" });
+
+    db.Products.Remove(product);
+    await db.SaveChangesAsync();
+    Console.WriteLine($"【系統通知】已刪除商品：{product.Name}");
+
+    return Results.Ok(new { Message = $"已成功刪除商品：{product.Name}" });
+});
+
 app.Run();
 
 // ==================== 資料結構與對應定義 ====================

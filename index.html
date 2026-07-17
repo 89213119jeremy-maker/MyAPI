@@ -11,72 +11,110 @@
     <!-- 1. 網頁的大標題 -->
     <h1>商品展示後台</h1>
 
-    <!-- 2. 一顆按鈕，點擊時會去執行叫作 loadProducts 的 JavaScript 功能 -->
-    <button onclick="loadProducts()">更新商品清單</button>
+    <!-- 2. 新增商品表單 -->
+    <div id="addProductForm" style="border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; max-width: 400px;">
+        <h3>➕ 新增商品</h3>
+        <div style="margin-bottom: 8px;">
+            <label>商品名稱：</label><br>
+            <input type="text" id="newName" placeholder="請輸入商品名稱" style="width: 100%; padding: 5px;">
+        </div>
+        <div style="margin-bottom: 8px;">
+            <label>價格：</label><br>
+            <input type="number" id="newPrice" placeholder="請輸入價格" style="width: 100%; padding: 5px;">
+        </div>
+        <div style="margin-bottom: 8px;">
+            <label>圖片網址（選填）：</label><br>
+            <input type="text" id="newImageUrl" placeholder="例如：/images/xxx.jpg" style="width: 100%; padding: 5px;">
+        </div>
+        <button onclick="addProduct()" style="padding: 8px 16px; cursor: pointer;">新增商品</button>
+    </div>
 
-    <!-- 3. 一個空的清單標籤 (ul)，我們會用 JavaScript 把商品一筆一筆塞進這裡 -->
+    <!-- 3. 一顆按鈕，點擊時會去執行叫作 loadProducts 的 JavaScript 功能 -->
+    <button onclick="loadProducts()">🔄 更新商品清單</button>
+
+    <!-- 4. 一個空的清單標籤 (ul)，我們會用 JavaScript 把商品一筆一筆塞進這裡 -->
     <ul id="productList">
         <li>等待載入商品...</li>
     </ul>
 
     <script>
-        // 建立一個功能，專門用來跟後端要資料
+        // API 基本網址（之後換網址只改這裡就好）
+        const API_BASE = 'http://localhost:5211';
+
+        // ==================== 讀取商品 ====================
         async function loadProducts() {
             try {
-                // 1. 用 fetch 去敲 C# 後端的門，把商品資料抓回來
-                // 這裡的 5211 要配合你 C# 終端機顯示的數字喔！
                 console.log('開始載入商品...');
-                const response = await fetch('http://localhost:5211/api/products');
+                const response = await fetch(API_BASE + '/api/products');
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
-                // 2. 把拿到的資料，轉換成網頁看得懂的 C# 物件/陣列格式
                 const products = await response.json();
                 console.log('成功取得商品資料:', products);
 
-                // 3. 抓到網頁上那個叫作 "productList" 的空位
                 const listElement = document.getElementById('productList');
-
-                // 先把裡面的「等待載入商品...」清空
                 listElement.innerHTML = '';
 
-                // 如果沒有商品
                 if (!products || products.length === 0) {
                     listElement.innerHTML = '<li>目前沒有商品</li>';
                     return;
                 }
 
-                // 4. 用迴圈把每一筆商品倒出來，做成新的 <li> 標籤塞進網頁
                 products.forEach(product => {
                     const li = document.createElement('li');
-                    li.style.listStyle = 'none';       // 去掉項目符號
-                    li.style.marginBottom = '20px';     // 每個商品之間的間距
+                    li.style.listStyle = 'none';
+                    li.style.marginBottom = '20px';
+                    li.style.padding = '10px';
+                    li.style.border = '1px solid #eee';
+                    li.style.maxWidth = '350px';
+                    li.id = 'product-' + product.id;
 
-                    // 先建立圖片（放在上面）
+                    // 圖片
                     const img = document.createElement('img');
-                    img.src = 'http://localhost:5211' + product.imageUrl;
+                    img.src = API_BASE + product.imageUrl;
                     img.alt = product.name;
                     img.style.width = '300px';
                     img.style.height = '300px';
-                    img.style.objectFit = 'cover';      // 等比例裁切填滿，不變形
-                    img.style.display = 'block';        // 圖片獨佔一行
+                    img.style.objectFit = 'cover';
+                    img.style.display = 'block';
 
-                    // 如果是耳機，依照原始比例顯示，寬度縮小一倍
                     if (product.imageUrl.includes('earphone')) {
                         img.style.width = '150px';
                         img.style.height = 'auto';
                         img.style.objectFit = 'contain';
                     }
 
-                    li.appendChild(img);                // 先放圖片
+                    li.appendChild(img);
 
-                    // 再建立文字（放在下面）
-                    const text = document.createElement('span');
-                    text.innerText = product.name + " ─ $" + product.price + "元";
-                    li.appendChild(text);               // 再放文字
+                    // 商品資訊文字
+                    const info = document.createElement('div');
+                    info.style.marginTop = '8px';
+                    info.innerHTML = '<strong>' + product.name + '</strong> ─ $' + product.price + '元';
+                    li.appendChild(info);
 
+                    // 操作按鈕區
+                    const btnGroup = document.createElement('div');
+                    btnGroup.style.marginTop = '8px';
+
+                    // 編輯按鈕
+                    const editBtn = document.createElement('button');
+                    editBtn.innerText = '✏️ 編輯';
+                    editBtn.style.marginRight = '8px';
+                    editBtn.style.cursor = 'pointer';
+                    editBtn.onclick = () => editProduct(product);
+                    btnGroup.appendChild(editBtn);
+
+                    // 刪除按鈕
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.innerText = '🗑️ 刪除';
+                    deleteBtn.style.cursor = 'pointer';
+                    deleteBtn.style.color = 'red';
+                    deleteBtn.onclick = () => deleteProduct(product.id, product.name);
+                    btnGroup.appendChild(deleteBtn);
+
+                    li.appendChild(btnGroup);
                     listElement.appendChild(li);
                 });
 
@@ -86,7 +124,177 @@
             }
         }
 
-        // 這行是告訴瀏覽器：「網頁一打開的時候，就自動幫我執行上面這個功能」
+        // ==================== 新增商品 ====================
+        async function addProduct() {
+            const name = document.getElementById('newName').value.trim();
+            const price = parseInt(document.getElementById('newPrice').value);
+            const imageUrl = document.getElementById('newImageUrl').value.trim();
+
+            // 前端防呆
+            if (!name) { alert('請輸入商品名稱！'); return; }
+            if (isNaN(price) || price < 0) { alert('請輸入有效的價格！'); return; }
+
+            try {
+                const response = await fetch(API_BASE + '/api/product', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: name,
+                        price: price,
+                        isAvailable: true,
+                        imageUrl: imageUrl || ''
+                    })
+                });
+
+                if (!response.ok) throw new Error('新增失敗');
+
+                const result = await response.json();
+                console.log('新增成功:', result);
+                alert('成功新增商品：' + result.name);
+
+                // 清空表單
+                document.getElementById('newName').value = '';
+                document.getElementById('newPrice').value = '';
+                document.getElementById('newImageUrl').value = '';
+
+                // 重新載入商品清單
+                loadProducts();
+
+            } catch (error) {
+                console.error('新增錯誤:', error);
+                alert('新增失敗，請檢查後端是否運行中');
+            }
+        }
+
+        // ==================== 刪除商品 ====================
+        async function deleteProduct(id, name) {
+            // 跳出確認視窗，避免誤刪
+            if (!confirm('確定要刪除「' + name + '」嗎？')) return;
+
+            try {
+                const response = await fetch(API_BASE + '/api/product/' + id, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) throw new Error('刪除失敗');
+
+                console.log('刪除成功');
+                alert('已刪除商品：' + name);
+
+                // 重新載入商品清單
+                loadProducts();
+
+            } catch (error) {
+                console.error('刪除錯誤:', error);
+                alert('刪除失敗，請檢查後端是否運行中');
+            }
+        }
+
+        // ==================== 編輯商品（進入編輯模式） ====================
+        function editProduct(product) {
+            const li = document.getElementById('product-' + product.id);
+            if (!li) return;
+
+            // 清空該商品的內容，換成編輯表單
+            li.innerHTML = '';
+            li.style.backgroundColor = '#fffde7';
+
+            // 名稱輸入框
+            const nameLabel = document.createElement('label');
+            nameLabel.innerText = '名稱：';
+            li.appendChild(nameLabel);
+            const nameInput = document.createElement('input');
+            nameInput.type = 'text';
+            nameInput.value = product.name;
+            nameInput.id = 'edit-name-' + product.id;
+            nameInput.style.width = '100%';
+            nameInput.style.marginBottom = '5px';
+            nameInput.style.padding = '5px';
+            li.appendChild(nameInput);
+
+            // 價格輸入框
+            const priceLabel = document.createElement('label');
+            priceLabel.innerText = '價格：';
+            li.appendChild(priceLabel);
+            const priceInput = document.createElement('input');
+            priceInput.type = 'number';
+            priceInput.value = product.price;
+            priceInput.id = 'edit-price-' + product.id;
+            priceInput.style.width = '100%';
+            priceInput.style.marginBottom = '5px';
+            priceInput.style.padding = '5px';
+            li.appendChild(priceInput);
+
+            // 圖片網址輸入框
+            const imgLabel = document.createElement('label');
+            imgLabel.innerText = '圖片網址：';
+            li.appendChild(imgLabel);
+            const imgInput = document.createElement('input');
+            imgInput.type = 'text';
+            imgInput.value = product.imageUrl;
+            imgInput.id = 'edit-img-' + product.id;
+            imgInput.style.width = '100%';
+            imgInput.style.marginBottom = '8px';
+            imgInput.style.padding = '5px';
+            li.appendChild(imgInput);
+
+            // 按鈕區
+            const btnGroup = document.createElement('div');
+
+            // 儲存按鈕
+            const saveBtn = document.createElement('button');
+            saveBtn.innerText = '💾 儲存';
+            saveBtn.style.marginRight = '8px';
+            saveBtn.style.cursor = 'pointer';
+            saveBtn.onclick = () => saveProduct(product.id, product.imageUrl);
+            btnGroup.appendChild(saveBtn);
+
+            // 取消按鈕
+            const cancelBtn = document.createElement('button');
+            cancelBtn.innerText = '取消';
+            cancelBtn.style.cursor = 'pointer';
+            cancelBtn.onclick = () => loadProducts();
+            btnGroup.appendChild(cancelBtn);
+
+            li.appendChild(btnGroup);
+        }
+
+        // ==================== 儲存編輯 ====================
+        async function saveProduct(id, originalImageUrl) {
+            const name = document.getElementById('edit-name-' + id).value.trim();
+            const price = parseInt(document.getElementById('edit-price-' + id).value);
+            const imageUrl = document.getElementById('edit-img-' + id).value.trim();
+
+            if (!name) { alert('商品名稱不能為空！'); return; }
+            if (isNaN(price) || price < 0) { alert('請輸入有效的價格！'); return; }
+
+            try {
+                const response = await fetch(API_BASE + '/api/product/' + id, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: name,
+                        price: price,
+                        isAvailable: true,
+                        imageUrl: imageUrl || originalImageUrl
+                    })
+                });
+
+                if (!response.ok) throw new Error('編輯失敗');
+
+                console.log('編輯成功');
+                alert('商品已更新');
+
+                // 重新載入商品清單
+                loadProducts();
+
+            } catch (error) {
+                console.error('編輯錯誤:', error);
+                alert('編輯失敗，請檢查後端是否運行中');
+            }
+        }
+
+        // 網頁一打開就自動載入商品
         window.onload = loadProducts;
     </script>
 
